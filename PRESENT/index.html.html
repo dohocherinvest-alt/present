@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>$PRESENT — One clock. One present.</title>
+<style>
+:root{--bg:#050505;--bg2:#0B0B0B;--tx:#F2F2F2;--mu:#777;--ln:#202020;--rd:#8B0000;--rd2:#c23030;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:70px;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--tx);font:300 1.05rem/1.6 'Space Grotesk',system-ui,sans-serif;overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:91;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+a{color:inherit}
+:focus-visible{outline:1px solid var(--rd2);outline-offset:3px}
+button{font:inherit;color:inherit;background:none;border:1px solid var(--ln);padding:.85rem 1.4rem;cursor:pointer;letter-spacing:.14em;font-size:.78rem;transition:border-color .25s,background .25s,color .25s,transform .15s;min-height:44px;text-transform:uppercase}
+button:hover:not(:disabled){border-color:var(--rd);background:rgba(139,0,0,.12)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{color:var(--mu);cursor:not-allowed;border-style:dashed}
+/* intro */
+#intro{position:fixed;inset:0;z-index:100;background:#000;display:flex;flex-direction:column;justify-content:center;padding:2rem;font-size:.9rem;letter-spacing:.18em;transition:opacity .8s}
+#intro.off{opacity:0;pointer-events:none}
+#intro p{margin:.3rem 0;opacity:0;transition:opacity .4s;color:var(--mu)}
+#intro p.on{opacity:1}#intro p.last.on{color:var(--tx)}
+#skip{position:absolute;right:1.5rem;bottom:1.5rem;border:0;color:var(--mu);padding:.5rem}
+/* nav */
+header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:calc(1rem + env(safe-area-inset-top,0px)) clamp(1.2rem,4vw,3rem) 1rem;background:linear-gradient(var(--bg) 40%,transparent)}
+.logo{font-weight:700;letter-spacing:.06em;text-decoration:none}
+nav{display:flex;gap:1.6rem}
+nav a{font-size:.72rem;letter-spacing:.16em;text-decoration:none;color:var(--mu);text-transform:uppercase;transition:color .2s;position:relative}
+nav a:hover,nav a.cur{color:var(--tx)}
+nav a.cur::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:1px;background:var(--rd)}
+#burger{display:none;border:0;padding:.5rem;min-width:44px}
+#burger span{display:block;width:22px;height:1px;background:var(--tx);margin:6px 0;transition:transform .3s,opacity .3s}
+#burger[aria-expanded=true] span:first-child{transform:translateY(3.5px) rotate(45deg)}
+#burger[aria-expanded=true] span:last-child{transform:translateY(-3.5px) rotate(-45deg)}
+@media(max-width:940px){#burger{display:block}
+nav{position:fixed;inset:0;background:var(--bg);flex-direction:column;justify-content:center;padding:2rem;gap:1.4rem;opacity:0;pointer-events:none;transition:opacity .3s;z-index:-1}
+nav.open{opacity:1;pointer-events:auto}nav a{font-size:1.4rem;color:var(--tx)}header{z-index:60}}
+/* layout */
+section{padding:clamp(5rem,12vw,10rem) clamp(1.2rem,6vw,6rem);border-top:1px solid var(--ln);position:relative}
+#home{min-height:100svh;border:0;display:flex;flex-direction:column;justify-content:center;padding-top:7rem}
+h1,h2{font-weight:300;line-height:1;letter-spacing:-.03em;margin:0 0 1.5rem}
+h2{font-size:clamp(2.2rem,7vw,5.6rem);max-width:15ch}
+.sub{color:var(--mu);max-width:52ch;margin:0 0 2.5rem}
+.small{font-size:.72rem;color:var(--mu);letter-spacing:.06em}
+/* clock */
+#clock{font-size:clamp(1.5rem,7.6vw,7.4rem);font-weight:300;letter-spacing:-.04em;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;margin:0}
+#clock .sep{color:var(--mu)}#clock .ms{color:var(--rd2)}
+#clock.g{transform:translateX(3px);text-shadow:-3px 0 var(--rd),2px 0 #245}
+.never{margin:1.6rem 0 0;font-size:.8rem;letter-spacing:.3em;display:flex;align-items:center;gap:.8rem}
+.never i{width:7px;height:7px;background:var(--rd);border-radius:50%;animation:p 2s infinite}
+@keyframes p{50%{opacity:.2}}
+.phil{margin:4rem 0 2rem;font-size:clamp(1.3rem,3.2vw,2.4rem);line-height:1.25;letter-spacing:-.02em;max-width:26ch}
+.phil span{display:block;color:var(--mu)}.phil span:last-child{color:var(--tx)}
+.never2{letter-spacing:.2em;font-size:.78rem;margin-bottom:2.5rem}
+/* triptych */
+.tri{display:flex;border:1px solid var(--ln);min-height:340px}
+.tri>div{flex:1;padding:2rem;display:flex;flex-direction:column;justify-content:space-between;opacity:.45;transition:flex .6s cubic-bezier(.2,.7,.2,1),opacity .4s,background .4s;border-right:1px solid var(--ln);cursor:default}
+.tri>div:last-child{border:0}
+.tri>div.pr{flex:2;opacity:1;background:var(--bg2)}
+.tri>div:hover{opacity:1}
+.tri:hover>div.pr:not(:hover){opacity:.7}
+.tri h3{margin:0;font-weight:400;font-size:.8rem;letter-spacing:.3em}
+.tri p{font-size:clamp(1.3rem,2.6vw,2.2rem);letter-spacing:-.02em;line-height:1.15;margin:0}
+.tri .pr h3{color:var(--rd2)}
+.tri .pr p{font-size:clamp(1.8rem,4vw,3.4rem)}
+@media(max-width:720px){.tri{flex-direction:column}.tri>div{border-right:0;border-bottom:1px solid var(--ln);min-height:150px}}
+/* forms & results */
+textarea,input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--ln);color:var(--tx);font:inherit;padding:1.1rem 1.2rem;border-radius:0;transition:border-color .25s,filter .6s,opacity .6s}
+textarea:focus,input:focus{outline:0;border-color:var(--rd)}
+textarea{min-height:130px;resize:vertical}
+textarea.dis{filter:blur(8px);opacity:0}
+.row{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 0}
+.chips button{text-transform:none;letter-spacing:0;font-size:.85rem;color:var(--mu);padding:.4rem .9rem;min-height:36px}
+.res{margin-top:2.5rem;border-left:1px solid var(--ln);padding-left:1.5rem;min-height:1rem}
+.res .q{color:var(--mu);margin:0 0 1.4rem;font-style:italic}
+.res dl{margin:0}.res dt{font-size:.7rem;letter-spacing:.3em;color:var(--mu);margin-top:1.2rem}
+.res dt.p{color:var(--rd2)}
+.res dd{margin:.2rem 0 0;font-size:clamp(1.2rem,2.6vw,1.9rem);letter-spacing:-.01em;opacity:0;transform:translateY(6px);animation:in .7s forwards}
+.res dd:nth-of-type(2){animation-delay:.5s}.res dd:nth-of-type(3){animation-delay:1s}
+@keyframes in{to{opacity:1;transform:none}}
+.fut{font-size:clamp(1.5rem,4vw,3rem);letter-spacing:-.02em;line-height:1.15;max-width:22ch;margin:2rem 0 1rem;min-height:3.5em}
+.fut.scr{color:var(--mu);filter:blur(1px)}
+.ok{color:var(--rd2);letter-spacing:.14em;font-size:.8rem;margin-top:1rem}
+#mem{margin-top:2rem;display:none;border:1px solid var(--ln)}#mem.open{display:block}
+#mem header{position:static;padding:.8rem 1rem;border-bottom:1px solid var(--ln);background:none}
+.m{padding:1.1rem 1rem;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.m:last-child{border:0}.m p{margin:.3rem 0 0;white-space:pre-wrap;word-break:break-word}
+.m .small{margin:0}.m button{padding:.3rem .8rem;min-height:36px;font-size:.7rem}
+.empty{padding:1.4rem 1rem;color:var(--mu);margin:0}
+/* lost */
+#lost{transition:background .6s}#lost.gone{background:#000}
+#lost .big{font-size:clamp(2rem,9vw,7rem);letter-spacing:-.03em;line-height:1.05;margin:0}
+#lost.gone .big{animation:in .9s both}#lost .cd{font-size:clamp(1.6rem,5vw,3.4rem);color:var(--mu);margin:1.2rem 0 0}
+/* lore */
+.lore p{font-size:clamp(1.3rem,3vw,2.3rem);letter-spacing:-.02em;line-height:1.25;max-width:28ch;margin:0 0 .5rem;color:var(--mu)}
+.lore p.hl{color:var(--tx);margin-top:3rem}
+.lore h3{font-size:clamp(3rem,10vw,8rem);font-weight:300;letter-spacing:-.04em;margin:3rem 0 1rem;line-height:1}
+/* token */
+.tok dl{display:grid;grid-template-columns:minmax(120px,220px) 1fr auto;margin:3rem 0 0;border-top:1px solid var(--ln)}
+.tok dl>*{padding:1.1rem 0;border-bottom:1px solid var(--ln);margin:0;display:flex;align-items:center;min-width:0}
+.tok dt{color:var(--mu);font-size:.72rem;letter-spacing:.2em}
+.tok dd{word-break:break-all;font-size:.9rem}.tok dd.na{color:var(--mu)}
+.tok dl button{padding:.4rem .9rem;min-height:36px;font-size:.7rem;margin-left:1rem}
+@media(max-width:620px){.tok dl{grid-template-columns:1fr auto}.tok dt{grid-column:1/-1;border:0;padding-bottom:0}}
+.tk{font-size:clamp(4rem,16vw,13rem);font-weight:700;letter-spacing:-.06em;line-height:.9;margin:0 0 3rem}
+.big3{font-size:clamp(1.5rem,4vw,3rem);line-height:1.2;letter-spacing:-.02em;margin:0}
+.big3 span{display:block;color:var(--mu)}.big3 span:last-child{color:var(--tx)}
+.soc{display:flex;gap:1rem;flex-wrap:wrap}
+.soc button{font-size:1rem;padding:1.4rem 3.5rem;min-width:180px}
+footer{padding:3rem clamp(1.2rem,6vw,6rem) 4rem;border-top:1px solid var(--ln);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+#cur{position:fixed;width:26px;height:26px;border:1px solid rgba(255,255,255,.35);border-radius:50%;pointer-events:none;z-index:95;left:-50px;top:-50px;transition:width .25s,height .25s,border-color .25s;mix-blend-mode:difference}
+#cur.h{width:48px;height:48px;border-color:var(--rd2)}
+@media(hover:none){#cur{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.res dd{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="intro" class="mono" role="status"><p>INITIALIZING PRESENT…</p><p>SYNCING CLOCK…</p><p class="last">PRESENT ONLINE.</p><button id="skip">Skip</button></div>
+<div id="cur"></div>
+<header>
+<a class="logo" href="#home" data-cfg="name">$PRESENT</a>
+<button id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span></button>
+<nav id="nav">
+<a href="#oracle">Oracle</a><a href="#memory">Memory</a><a href="#future">Future</a><a href="#lost">Missed</a><a href="#lore">Lore</a><a href="#token">$PRESENT</a><a href="#community">Community</a>
+</nav>
+</header>
+
+<main>
+<section id="home">
+<p class="small mono" id="stamp" style="margin:0 0 1.5rem"></p>
+<h1 id="clock" class="mono" aria-label="Elapsed time since the project began">000:00:00:000</h1>
+<p class="never mono"><i></i>THE CLOCK NEVER STOPS.</p>
+<p class="phil"><span>You can't change the past.</span><span>You don't know what the future holds.</span><span>But you can shape the present.</span></p>
+<p class="never2 mono">THIS MOMENT WILL NEVER EXIST AGAIN.</p>
+<div class="row" style="margin:0"><button data-go="#timeline">Enter the present</button></div>
+</section>
+
+<section id="timeline">
+<div class="tri">
+<div><h3 class="mono">PAST</h3><p>You can't change it.</p></div>
+<div class="pr"><h3 class="mono">PRESENT</h3><p>You can shape it.</p><span class="small mono" id="nowstamp"></span></div>
+<div><h3 class="mono">FUTURE</h3><p>You don't know what it holds.</p></div>
+</div>
+</section>
+
+<section id="oracle">
+<h2>Ask the future.</h2>
+<p class="sub">Type any question. The Oracle answers in three tenses. It is a creative experiment: it predicts nothing and knows nothing about you.</p>
+<input type="text" id="oq" maxlength="140" placeholder="Will I become successful?" aria-label="Your question">
+<div class="chips" id="chips"></div>
+<div class="row"><button id="ask">Ask</button><button id="askagain" hidden>Ask again</button></div>
+<div class="res" id="ores" aria-live="polite"></div>
+<p class="small" style="margin-top:2rem">Fictional entertainment. Generated locally in your browser.</p>
+</section>
+
+<section id="memory">
+<h2>Everything becomes the past.</h2>
+<p class="sub">Saved moments stay on this device only, in your browser's local storage. No account, no server.</p>
+<textarea id="mt" maxlength="600" placeholder="What do you want to remember?" aria-label="What do you want to remember?"></textarea>
+<div class="row"><button id="save">Save moment</button><button id="viewmem">View memories (<span id="mc">0</span>)</button></div>
+<div id="msg" aria-live="polite"></div>
+<div id="mem"><header><span class="small mono">SAVED MOMENTS</span><button id="closemem">Close</button></header><div id="ml"></div></div>
+</section>
+
+<section id="future">
+<h2>You don't know what the future holds.</h2>
+<div class="fut" id="fut" aria-live="polite">Press the button. Nothing is decided yet.</div>
+<div class="row" style="margin-bottom:1.5rem"><button id="gen">Generate future</button></div>
+<p class="small">Fictional entertainment. Not a real prediction.</p>
+</section>
+
+<section id="lost">
+<p class="big" id="lbig">YOU MISSED IT.</p>
+<p class="cd mono" id="lcd">00:00.000</p>
+<p class="small mono" id="lsub" style="margin-top:2rem">A moment arrives every two minutes. It is the same moment for everyone.</p>
+</section>
+
+<section id="lore" class="lore">
+<p>At some point, humanity began measuring time.</p><p>Seconds became minutes.</p><p>Minutes became memories.</p><p>The future became something to fear.</p><p>The past became something to regret.</p>
+<p class="hl" style="color:var(--tx)">And the present became something nobody noticed.</p>
+<h3>The clock.</h3>
+<p>The clock was never created to tell you what time it is.</p>
+<p class="hl">It was created to remind you that time is leaving.</p>
+</section>
+
+<section id="token" class="tok">
+<p class="tk" data-cfg="ticker">$PRESENT</p>
+<p class="big3"><span>You can't own time.</span><span>You can't stop it.</span><span>You can only be present.</span></p>
+<dl id="tdl"></dl>
+<p class="small" style="margin-top:2rem;max-width:60ch">$PRESENT is a memecoin created for entertainment and identity. It has no promised utility and no expectation of financial return. Nothing on this site is financial advice.</p>
+</section>
+
+<section id="community">
+<h2>Be here.</h2>
+<div class="soc"><button id="bx">X</button></div>
+</section>
+</main>
+<footer class="small mono"><span>ONE CLOCK. ONE PRESENT.</span><span id="yr"></span></footer>
+
+<script>
+/* ---------- CONFIG: edit these only ---------- */
+const CONFIG={
+  name:'$PRESENT', ticker:'$PRESENT',
+  startTimestamp:Date.UTC(2026,8,30,19,0,0), // 30 Sep 2026, 22:00 ora Chisinau (19:00 UTC)
+  xUrl:'https://x.com/Zunoxxp',
+  network:'', dexUrl:'', chartUrl:''
+};
+/* --------------------------------------------- */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+document.title=CONFIG.ticker+' — One clock. One present.';
+$$('[data-cfg]').forEach(e=>e.textContent=CONFIG[e.dataset.cfg]);
+$('#yr').textContent=new Date().getFullYear();
+
+/* intro */
+(function(){const el=$('#intro'),ps=$$('#intro p');let done=false,t=[];
+ const end=()=>{if(done)return;done=true;t.forEach(clearTimeout);el.classList.add('off');setTimeout(()=>el.remove(),900)};
+ ps.forEach((p,i)=>t.push(setTimeout(()=>p.classList.add('on'),300+i*750)));
+ t.push(setTimeout(end,rm?600:3000));
+ el.addEventListener('click',end);addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter')end()},{once:true});})();
+
+/* clock: derived from Date.now() every frame, no accumulated drift */
+const clockEl=$('#clock');
+function clockText(ms){const h=Math.floor(ms/36e5),m=Math.floor(ms/6e4)%60,s=Math.floor(ms/1e3)%60,x=ms%1000;
+ return `${pad(h,3)}<span class="sep">:</span>${pad(m)}<span class="sep">:</span>${pad(s)}<span class="sep">:</span><span class="ms">${pad(x,3)}</span>`}
+let lastSec=-1;
+/* lost moment */
+const CYCLE=120000,GONE=9000;
+const OUT=[['YOU WERE HERE.','The moment is gone.'],['IT PASSED.','You were reading. It kept going.'],['NOTHING HAPPENED.','That was the moment.'],['YOU BLINKED.','So did everyone else.'],['ALMOST.','It was over before the count reached zero.']];
+const lost=$('#lost');let lostState='';
+function tick(){
+ const now=Date.now(),el=Math.max(0,now-CONFIG.startTimestamp);
+ clockEl.innerHTML=clockText(el);
+ const sec=Math.floor(el/1000);
+ if(sec!==lastSec){lastSec=sec;$('#stamp').textContent='UTC '+new Date(now).toISOString().replace('T',' ').slice(0,19);$('#nowstamp').textContent=new Date(now).toISOString().slice(11,19)+' UTC — NOW';
+  if(!rm&&Math.random()<.08){clockEl.classList.add('g');setTimeout(()=>clockEl.classList.remove('g'),90)}}
+ const c=Math.floor(now/CYCLE),since=now-c*CYCLE;
+ if(since<GONE){const o=OUT[(c*7)%OUT.length];
+  if(lostState!=='g'+c){lostState='g'+c;lost.classList.add('gone');$('#lbig').textContent=o[0];$('#lcd').textContent=o[1];$('#lsub').textContent='The next moment is already on its way.'}}
+ else{const r=(c+1)*CYCLE-now;
+  if(lostState!=='c'){lostState='c';lost.classList.remove('gone');$('#lbig').textContent='YOU MISSED IT.';$('#lsub').textContent='A moment arrives every two minutes. It is the same moment for everyone.'}
+  $('#lcd').textContent=`${pad(Math.floor(r/6e4))}:${pad(Math.floor(r/1e3)%60)}.${pad(r%1000,3)}`}
+ requestAnimationFrame(tick)}
+tick();
+
+/* nav */
+const nav=$('#nav'),bg=$('#burger');
+function menu(o){nav.classList.toggle('open',o);bg.setAttribute('aria-expanded',o);bg.setAttribute('aria-label',o?'Close menu':'Open menu')}
+bg.onclick=()=>menu(!nav.classList.contains('open'));
+$$('nav a').forEach(a=>a.addEventListener('click',()=>menu(false)));
+addEventListener('keydown',e=>{if(e.key==='Escape')menu(false)});
+$$('[data-go]').forEach(b=>b.onclick=()=>$(b.dataset.go).scrollIntoView({behavior:rm?'auto':'smooth'}));
+const links=$$('nav a');
+$$('main section').forEach(s=>new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+s.id))}),{rootMargin:'-45% 0px -50% 0px'}).observe(s));
+
+/* cursor */
+const cur=$('#cur');addEventListener('pointermove',e=>{cur.style.transform=`translate(${e.clientX-13}px,${e.clientY-13}px)`;cur.classList.toggle('h',!!e.target.closest('button,a,input,textarea'))});
+
+/* seeded rng */
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pick=(a,r)=>a[Math.floor(r()*a.length)];
+
+/* oracle */
+const PAST=["You already made the decision to ask.","Something brought you to this question. It is already behind you.","The person who first wondered this is gone.","Every answer you ignored before is still where you left it.","You have carried this question longer than you admit.","Nothing you did before this moment can be edited.","You have asked something like this before."];
+const FUT=["Unknown.","Not written yet.","Several outcomes. None of them promised.","It depends on a choice you haven't noticed yet.","Someone will make it easier. Someone else will not.","The honest answer is: later.","It will look obvious in hindsight."];
+const PRE=["You are reading this sentence.","This is the only part you can touch.","Breathe once. Then decide.","The next small step is the whole answer.","You are here. Nothing else is required yet.","Whatever you do next becomes the past."];
+const EX=["Will I become successful?","Where will I be in 5 years?","Should I take the risk?"];
+let asks=0,lastQ='';
+$('#chips').innerHTML=EX.map(q=>`<button type="button">${q}</button>`).join('');
+$$('#chips button').forEach(b=>b.onclick=()=>{$('#oq').value=b.textContent;oracle()});
+function oracle(again){
+ let q=$('#oq').value.trim();
+ if(!q){$('#ores').innerHTML='<p class="q">Type a question first. The Oracle needs something to answer.</p>';$('#oq').focus();return}
+ asks++;const r=rng(hash(q.toLowerCase())+asks*7919+(Date.now()&0xfff));
+ $('#ores').innerHTML=`<p class="q">“${q.replace(/</g,'&lt;')}”</p><dl><dt class="mono">PAST</dt><dd>${pick(PAST,r)}</dd><dt class="mono">FUTURE</dt><dd>${pick(FUT,r)}</dd><dt class="mono p">PRESENT</dt><dd>${pick(PRE,r)}</dd></dl>`;
+ $('#askagain').hidden=false;lastQ=q}
+$('#ask').onclick=()=>oracle();$('#askagain').onclick=()=>oracle(true);
+$('#oq').addEventListener('keydown',e=>{if(e.key==='Enter')oracle()});
+
+/* memory vault */
+const KEY='present.moments';
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
+const store=a=>{try{localStorage.setItem(KEY,JSON.stringify(a));return true}catch(e){return false}};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderMem(){const a=load();$('#mc').textContent=a.length;
+ $('#ml').innerHTML=a.length?a.slice().reverse().map(m=>`<div class="m"><div><p class="small mono">${new Date(m.t).toDateString()} · ${m.t}</p><p>${esc(m.x)}</p></div><button data-d="${m.t}">Delete</button></div>`).join(''):'<p class="empty">Nothing saved yet. Write something above and save it.</p>';
+ $$('#ml [data-d]').forEach(b=>b.onclick=()=>{store(load().filter(m=>String(m.t)!==b.dataset.d));renderMem()})}
+$('#save').onclick=()=>{const t=$('#mt').value.trim(),msg=$('#msg');
+ if(!t){msg.innerHTML='<p class="ok">Write something first.</p>';return}
+ const a=load();a.push({t:Date.now(),x:t});
+ if(!store(a)){msg.innerHTML='<p class="ok">Storage is blocked in this browser, so nothing was saved.</p>';return}
+ const ta=$('#mt');ta.classList.add('dis');
+ setTimeout(()=>{ta.value='';ta.classList.remove('dis');msg.innerHTML='<p class="ok">MOMENT SAVED.</p><p class="sub" style="margin:.3rem 0 0">You just turned your present into the past.</p>';renderMem()},rm?0:650)};
+$('#viewmem').onclick=()=>{$('#mem').classList.add('open');renderMem()};
+$('#closemem').onclick=()=>$('#mem').classList.remove('open');
+renderMem();
+
+/* future machine */
+const FM=["You will make a decision you didn't expect.","Someone you haven't met yet will change your perspective.","You will remember this prediction and wonder if it was true.","You will forget this prediction before it happens.","A small thing you ignore today will matter later.","You will wait for a sign. It will be ordinary.","Something you are dreading will be over sooner than it feels.","You will say yes to something you meant to refuse.","An old message will find you at the right time.","You will notice a moment only after it has passed.","Tomorrow will look nothing like you planned, and it will be fine."];
+let lf=-1;
+$('#gen').onclick=()=>{const f=$('#fut');let i;do{i=Math.floor(Math.random()*FM.length)}while(i===lf);lf=i;
+ if(rm){f.textContent=FM[i];$('#gen').textContent='Generate another';return}
+ f.classList.add('scr');let n=0;const iv=setInterval(()=>{f.textContent=FM[Math.floor(Math.random()*FM.length)].replace(/[a-z]/g,c=>Math.random()<.5?c:'▒');if(++n>8){clearInterval(iv);f.classList.remove('scr');f.textContent=FM[i];$('#gen').textContent='Generate another'}},70)};
+
+/* token + community */
+function copy(t,b){const done=()=>{const o=b.textContent;b.textContent='COPIED';setTimeout(()=>b.textContent=o,1500)};
+ if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fb());else fb();
+ function fb(){const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy')}catch(e){}x.remove();done()}}
+const open=u=>window.open(u,'_blank','noopener,noreferrer');
+function act(b,url,label){if(url){b.textContent=label;b.onclick=()=>open(url)}else{b.disabled=true;b.title='Coming soon'}}
+const rows=[['NETWORK',CONFIG.network,''],['DEX',CONFIG.dexUrl,'Open'],['CHART',CONFIG.chartUrl,'Open'],['COMMUNITY',CONFIG.xUrl,'#community']];
+const dl=$('#tdl');
+rows.forEach(([k,v,a])=>{const dt=document.createElement('dt');dt.className='mono';dt.textContent=k;
+ const dd=document.createElement('dd');dd.textContent=v||'Not announced';if(!v)dd.className='na';
+ const cell=document.createElement('div');cell.style.justifyContent='flex-end';
+ if(a){const b=document.createElement('button');b.textContent=v?a==='copy'?'Copy':a==='#community'?'View':a:'Coming soon';
+  if(!v)b.disabled=true;else b.onclick=()=>a==='copy'?copy(v,b):a==='#community'?$('#community').scrollIntoView({behavior:rm?'auto':'smooth'}):open(v);cell.appendChild(b)}
+ dl.append(dt,dd,cell)});
+act($('#bx'),CONFIG.xUrl,'X');
+if(!CONFIG.xUrl)$('#bx').textContent='X — coming soon';
+
+</script>
+</body>
+</html>
